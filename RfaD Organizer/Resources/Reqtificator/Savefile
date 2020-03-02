@@ -1,0 +1,13 @@
+### Savefile used for the application.  Version: 2
+LCHAR_MERGE: 1
+LITEM_MERGE: 1
+OpenEncounterZones: 1
+ADDALLMASTERS: 1
+IGN_EquippingOverhaul: 0
+IGN_modCount: 0
+IGN_Bashed: 0
+IGN_lastmod: 0
+IGN_missingfixpack: 0
+IGN_fixpackorder: 0
+IGN_bugFixes: 0
+IGN_crashFixes: 0
