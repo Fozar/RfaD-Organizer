@@ -31,11 +31,11 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ROrganizer));
             this.logoBox = new System.Windows.Forms.PictureBox();
             this.modpackBrowseBox = new System.Windows.Forms.TextBox();
-            this.moBrowseBox = new System.Windows.Forms.TextBox();
+            this.organizerBrowseBox = new System.Windows.Forms.TextBox();
             this.modpackLabel = new System.Windows.Forms.Label();
             this.moLabel = new System.Windows.Forms.Label();
             this.modpackBrowseButton = new System.Windows.Forms.Button();
-            this.moBrowseButton = new System.Windows.Forms.Button();
+            this.organizerBrowseButton = new System.Windows.Forms.Button();
             this.doAllButton = new System.Windows.Forms.Button();
             this.verLabel = new System.Windows.Forms.Label();
             this.byLabel = new System.Windows.Forms.Label();
@@ -67,17 +67,20 @@
             this.modpackBrowseBox.BackColor = System.Drawing.SystemColors.Window;
             this.modpackBrowseBox.Location = new System.Drawing.Point(12, 179);
             this.modpackBrowseBox.Name = "modpackBrowseBox";
+            this.modpackBrowseBox.ReadOnly = true;
             this.modpackBrowseBox.Size = new System.Drawing.Size(379, 20);
             this.modpackBrowseBox.TabIndex = 1;
+            this.modpackBrowseBox.TextChanged += new System.EventHandler(this.modpackBrowseBox_TextChanged);
             // 
-            // moBrowseBox
+            // organizerBrowseBox
             // 
-            this.moBrowseBox.BackColor = System.Drawing.SystemColors.Window;
-            this.moBrowseBox.Location = new System.Drawing.Point(12, 257);
-            this.moBrowseBox.Name = "moBrowseBox";
-            this.moBrowseBox.Size = new System.Drawing.Size(379, 20);
-            this.moBrowseBox.TabIndex = 2;
-            this.moBrowseBox.TextChanged += new System.EventHandler(this.moBrowseBox_TextChanged);
+            this.organizerBrowseBox.BackColor = System.Drawing.SystemColors.Window;
+            this.organizerBrowseBox.Location = new System.Drawing.Point(12, 218);
+            this.organizerBrowseBox.Name = "organizerBrowseBox";
+            this.organizerBrowseBox.ReadOnly = true;
+            this.organizerBrowseBox.Size = new System.Drawing.Size(379, 20);
+            this.organizerBrowseBox.TabIndex = 2;
+            this.organizerBrowseBox.TextChanged += new System.EventHandler(this.organizerBrowseBox_TextChanged);
             // 
             // modpackLabel
             // 
@@ -91,7 +94,7 @@
             // moLabel
             // 
             this.moLabel.AutoSize = true;
-            this.moLabel.Location = new System.Drawing.Point(9, 241);
+            this.moLabel.Location = new System.Drawing.Point(9, 202);
             this.moLabel.Name = "moLabel";
             this.moLabel.Size = new System.Drawing.Size(230, 13);
             this.moLabel.TabIndex = 4;
@@ -108,18 +111,19 @@
             this.modpackBrowseButton.UseVisualStyleBackColor = false;
             this.modpackBrowseButton.Click += new System.EventHandler(this.modpackBrowseButton_Click);
             // 
-            // moBrowseButton
+            // organizerBrowseButton
             // 
-            this.moBrowseButton.Location = new System.Drawing.Point(397, 256);
-            this.moBrowseButton.Name = "moBrowseButton";
-            this.moBrowseButton.Size = new System.Drawing.Size(75, 20);
-            this.moBrowseButton.TabIndex = 6;
-            this.moBrowseButton.Text = "Обзор";
-            this.moBrowseButton.UseVisualStyleBackColor = true;
-            this.moBrowseButton.Click += new System.EventHandler(this.moBrowseButton_Click);
+            this.organizerBrowseButton.Location = new System.Drawing.Point(397, 218);
+            this.organizerBrowseButton.Name = "organizerBrowseButton";
+            this.organizerBrowseButton.Size = new System.Drawing.Size(75, 20);
+            this.organizerBrowseButton.TabIndex = 6;
+            this.organizerBrowseButton.Text = "Обзор";
+            this.organizerBrowseButton.UseVisualStyleBackColor = true;
+            this.organizerBrowseButton.Click += new System.EventHandler(this.organizerBrowseButton_Click);
             // 
             // doAllButton
             // 
+            this.doAllButton.Enabled = false;
             this.doAllButton.Location = new System.Drawing.Point(12, 283);
             this.doAllButton.Name = "doAllButton";
             this.doAllButton.Size = new System.Drawing.Size(460, 23);
@@ -179,7 +183,7 @@
             // skyrimLabel
             // 
             this.skyrimLabel.AutoSize = true;
-            this.skyrimLabel.Location = new System.Drawing.Point(9, 202);
+            this.skyrimLabel.Location = new System.Drawing.Point(9, 241);
             this.skyrimLabel.Name = "skyrimLabel";
             this.skyrimLabel.Size = new System.Drawing.Size(110, 13);
             this.skyrimLabel.TabIndex = 12;
@@ -188,15 +192,17 @@
             // skyrimBrowseBox
             // 
             this.skyrimBrowseBox.BackColor = System.Drawing.SystemColors.Window;
-            this.skyrimBrowseBox.Location = new System.Drawing.Point(12, 218);
+            this.skyrimBrowseBox.Location = new System.Drawing.Point(12, 257);
             this.skyrimBrowseBox.Name = "skyrimBrowseBox";
+            this.skyrimBrowseBox.ReadOnly = true;
             this.skyrimBrowseBox.Size = new System.Drawing.Size(379, 20);
             this.skyrimBrowseBox.TabIndex = 13;
+            this.skyrimBrowseBox.TextChanged += new System.EventHandler(this.skyrimBrowseBox_TextChanged);
             // 
             // skyrimBrowseButton
             // 
             this.skyrimBrowseButton.BackColor = System.Drawing.SystemColors.Control;
-            this.skyrimBrowseButton.Location = new System.Drawing.Point(397, 217);
+            this.skyrimBrowseButton.Location = new System.Drawing.Point(397, 256);
             this.skyrimBrowseButton.Name = "skyrimBrowseButton";
             this.skyrimBrowseButton.Size = new System.Drawing.Size(75, 20);
             this.skyrimBrowseButton.TabIndex = 14;
@@ -206,6 +212,7 @@
             // 
             // addExecutablesButton
             // 
+            this.addExecutablesButton.Enabled = false;
             this.addExecutablesButton.Location = new System.Drawing.Point(138, 312);
             this.addExecutablesButton.Name = "addExecutablesButton";
             this.addExecutablesButton.Size = new System.Drawing.Size(208, 23);
@@ -216,6 +223,7 @@
             // 
             // createProfileButton
             // 
+            this.createProfileButton.Enabled = false;
             this.createProfileButton.Location = new System.Drawing.Point(352, 312);
             this.createProfileButton.Name = "createProfileButton";
             this.createProfileButton.Size = new System.Drawing.Size(120, 23);
@@ -226,6 +234,7 @@
             // 
             // organizeModsButton
             // 
+            this.organizeModsButton.Enabled = false;
             this.organizeModsButton.Location = new System.Drawing.Point(12, 312);
             this.organizeModsButton.Name = "organizeModsButton";
             this.organizeModsButton.Size = new System.Drawing.Size(120, 23);
@@ -248,11 +257,11 @@
             this.Controls.Add(this.byLabel);
             this.Controls.Add(this.verLabel);
             this.Controls.Add(this.doAllButton);
-            this.Controls.Add(this.moBrowseButton);
+            this.Controls.Add(this.organizerBrowseButton);
             this.Controls.Add(this.modpackBrowseButton);
             this.Controls.Add(this.moLabel);
             this.Controls.Add(this.modpackLabel);
-            this.Controls.Add(this.moBrowseBox);
+            this.Controls.Add(this.organizerBrowseBox);
             this.Controls.Add(this.modpackBrowseBox);
             this.Controls.Add(this.logoBox);
             this.Controls.Add(this.progressBar1);
@@ -273,11 +282,11 @@
 
         private System.Windows.Forms.PictureBox logoBox;
         private System.Windows.Forms.TextBox modpackBrowseBox;
-        private System.Windows.Forms.TextBox moBrowseBox;
+        private System.Windows.Forms.TextBox organizerBrowseBox;
         private System.Windows.Forms.Label modpackLabel;
         private System.Windows.Forms.Label moLabel;
         private System.Windows.Forms.Button modpackBrowseButton;
-        private System.Windows.Forms.Button moBrowseButton;
+        private System.Windows.Forms.Button organizerBrowseButton;
         private System.Windows.Forms.Button doAllButton;
         private System.Windows.Forms.Label verLabel;
         private System.Windows.Forms.Label byLabel;

@@ -15,112 +15,133 @@ namespace RfaD_Organizer
 
     public partial class ROrganizer : Form
     {
-        private string ModpackPath
+        private string ModpackDir
         {
             get
             {
-                if (!string.IsNullOrEmpty(modpackBrowseBox.Text))
+                if (!string.IsNullOrEmpty(modpackBrowseBox.Text) && Directory.Exists(modpackBrowseBox.Text))
                     return modpackBrowseBox.Text;
                 return null;
             }
         }
 
-        private string ModpackDataPath
+        private string SkyrimDir
         {
             get
             {
-                if (!string.IsNullOrEmpty(ModpackPath))
-                    return ModpackPath + "\\Data";
-                return null;
-            }
-        }
-
-        private string SkyrimPath
-        {
-            get
-            {
-                if (!string.IsNullOrEmpty(skyrimBrowseBox.Text))
+                if (!string.IsNullOrEmpty(skyrimBrowseBox.Text) && Directory.Exists(skyrimBrowseBox.Text))
                     return skyrimBrowseBox.Text;
                 return null;
             }
         }
 
-        private string MOPath
+        private string OrganizerDir
         {
             get
             {
-                if (!string.IsNullOrEmpty(moBrowseBox.Text))
-                    return moBrowseBox.Text;
+                if (!string.IsNullOrEmpty(organizerBrowseBox.Text) && Directory.Exists(organizerBrowseBox.Text))
+                    return organizerBrowseBox.Text;
                 return null;
             }
         }
 
-        private string MOAppDataPath
+        private string ModpackDataDir
         {
             get
             {
-                string appDataMODir = Environment.GetFolderPath(
+                if (!string.IsNullOrEmpty(ModpackDir) && Directory.Exists(ModpackDir + "\\Data"))
+                    return ModpackDir + "\\Data";
+                return null;
+            }
+        }
+
+        private string OrganizerAppDataDir
+        {
+            get
+            {
+                string appDataOrganizerDir = Environment.GetFolderPath(
                     Environment.SpecialFolder.LocalApplicationData
                     ) + "\\ModOrganizer\\Skyrim";
-                if (Directory.Exists(appDataMODir))
-                    return appDataMODir;
+                if (Directory.Exists(appDataOrganizerDir))
+                    return appDataOrganizerDir;
                 return null;
             }
         }
 
-        private string MOINIFilePath
+        private string OrganizerIniFileDir
         {
             get
             {
-                if (!string.IsNullOrEmpty(MOPath) && File.Exists(MOPath + "\\ModOrganizer.ini"))
-                    return MOPath + "\\ModOrganizer.ini";
-                else if (!string.IsNullOrEmpty(MOAppDataPath) && File.Exists(MOAppDataPath + "\\ModOrganizer.ini"))
-                    return MOAppDataPath + "\\ModOrganizer.ini";
+                if (!string.IsNullOrEmpty(OrganizerDir) && File.Exists(OrganizerDir + "\\ModOrganizer.ini"))
+                    return OrganizerDir + "\\ModOrganizer.ini";
+                else if (!string.IsNullOrEmpty(OrganizerAppDataDir) && File.Exists(OrganizerAppDataDir + "\\ModOrganizer.ini"))
+                    return OrganizerAppDataDir + "\\ModOrganizer.ini";
                 return null;
             }
         }
 
-        private string MOBasePath
+        private string OrganizerModsDir
         {
             get
             {
-                string basePath = GetINIValue("Settings", "base_directory");
-                if (string.IsNullOrEmpty(basePath))
-                    basePath = MOPath;
-                return basePath;
+                string modsDir = GetINIValue("Settings", "mods_directory");
+                if (string.IsNullOrEmpty(modsDir))
+                    modsDir = OrganizerDir + "\\mods";
+                return modsDir;
             }
         }
 
-        private string MOModsPath
+        private string OrganizerProfilesDir
         {
             get
             {
-                string modsPath = GetINIValue("Settings", "mods_directory");
-                if (string.IsNullOrEmpty(modsPath))
-                    modsPath = MOPath + "\\mods";
-                return modsPath;
+                string profilesDir = GetINIValue("Settings", "profiles_directory");
+                if (string.IsNullOrEmpty(profilesDir))
+                    profilesDir = OrganizerDir + "\\profiles";
+                return profilesDir;
             }
         }
 
-        private string MOProfilesPath
-        {
-            get
-            {
-                string profilesPath = GetINIValue("Settings", "profiles_directory");
-                if (string.IsNullOrEmpty(profilesPath))
-                    profilesPath = MOPath + "\\profiles";
-                return profilesPath;
-            }
-        }
+        private IniData organizerIniData = null;
 
         public ROrganizer()
         {
             InitializeComponent();
             CenterToScreen();
-            if (MOBasePath != null)
+            if (!string.IsNullOrEmpty(OrganizerIniFileDir))
             {
-                moBrowseBox.Text = MOBasePath;
-                skyrimBrowseBox.Text = GetSkyrimDirectory();
+                organizerIniData = ReadINIFile(OrganizerIniFileDir);
+                if (organizerIniData != null)
+                {
+                    string baseDir = Path.GetFullPath(organizerIniData["Settings"]["base_directory"]);
+                    if (!string.IsNullOrEmpty(baseDir) && Directory.Exists(baseDir))
+                    {
+                        organizerBrowseBox.Text = baseDir;
+                    }
+                }
+            }  
+        }
+
+        private string GetSkyrimDirectory()
+        {
+            string gamePath = organizerIniData["General"]["gamePath"];
+            if (gamePath.StartsWith("@ByteArray"))
+            {
+                gamePath = gamePath.Replace("@ByteArray", "");
+            }
+            char[] parenthesis = { '(', ')' };
+            gamePath = gamePath.Trim(parenthesis);
+            return Path.GetFullPath(gamePath);
+        }
+
+        private void ToggleButtonsIfDirsExists()
+        {
+            if (!string.IsNullOrEmpty(ModpackDir) && !string.IsNullOrEmpty(OrganizerDir) && !string.IsNullOrEmpty(SkyrimDir))
+            {
+                doAllButton.Enabled = !doAllButton.Enabled;
+                organizeModsButton.Enabled = !organizeModsButton.Enabled;
+                addExecutablesButton.Enabled = !addExecutablesButton.Enabled;
+                createProfileButton.Enabled = !createProfileButton.Enabled;
             }
         }
 
@@ -142,64 +163,89 @@ namespace RfaD_Organizer
             }
         }
 
-        private void moBrowseButton_Click(object sender, EventArgs e)
+        private void organizerBrowseButton_Click(object sender, EventArgs e)
         {
             FolderBrowserDialog FBD = new FolderBrowserDialog();
             if (FBD.ShowDialog() == DialogResult.OK)
             {
-                moBrowseBox.Text = FBD.SelectedPath;
+                organizerBrowseBox.Text = FBD.SelectedPath;
             }
         }
 
         private void doAllButton_Click(object sender, EventArgs e)
         {
-            if (backgroundWorker1.IsBusy)
-            {
-                ShowErrorMessage("Операция уже выполняется");
-                return;
-            }
-            if (string.IsNullOrEmpty(ModpackPath) || string.IsNullOrEmpty(MOPath) || string.IsNullOrEmpty(SkyrimPath))
-            {
-                ShowErrorMessage("Все поля обязательны к заполнению");
-                return;
-            }
-            if (!Directory.Exists(ModpackPath))
-            {
-                ShowErrorMessage("Указанного пути не существует:\n" + ModpackPath);
-                return;
-            }
-            if (!Directory.Exists(MOPath))
-            {
-                ShowErrorMessage("Указанного пути не существует:\n" + MOPath);
-                return;
-            }
-            if (!Directory.Exists(SkyrimPath))
-            {
-                ShowErrorMessage("Указанного пути не существует:\n" + SkyrimPath);
-                return;
-            }
-            if (!Directory.Exists(MOModsPath))
+            if (!Directory.Exists(OrganizerModsDir))
             {
                 ShowErrorMessage("Не найден файл конфигурации Mod Organizer или каталог модов не существует.");
                 return;
             }
-            if (!Directory.Exists(ModpackDataPath))
+            if (!Directory.Exists(ModpackDataDir))
             {
-                ShowErrorMessage("По указанному пути отсутствует папка Data: \n" + ModpackDataPath);
+                ShowErrorMessage("По указанному пути отсутствует папка Data: \n" + ModpackDataDir);
                 return;
             }
-            if (!Directory.Exists(MOProfilesPath))
+            if (!Directory.Exists(OrganizerProfilesDir))
             {
                 ShowErrorMessage("Не найден файл конфигурации Mod Organizer или каталог профилей не существует.");
                 return;
             }
 
+            StartWorker();
+            AddExecutables();
+            CreateProfile();
+            MessageBox.Show("Добавлены исполняемые файлы для FNISforUsers и Reqtificator.\n\n" +
+                "Создан профиль Requiem for a Dream:\n" + OrganizerProfilesDir + ".\n" +
+                "Ожидайте организации модов.",
+                "Операция выполнена", MessageBoxButtons.OK);
+        }
+
+        private void createProfileButton_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(OrganizerDir))
+            {
+                ShowErrorMessage("Путь к папке Mod Organizer 2 обязателен к заполнению.");
+                return;
+            }
+            if (!Directory.Exists(OrganizerDir))
+            {
+                ShowErrorMessage("Указанного пути не существует:\n" + OrganizerDir);
+                return;
+            }
+            if (!Directory.Exists(OrganizerProfilesDir))
+            {
+                ShowErrorMessage("Не найден файл конфигурации Mod Organizer или каталог профилей не существует.");
+                return;
+            }
+
+            CreateProfile();
+            MessageBox.Show("Создан профиль Requiem for a Dream:\n" + OrganizerProfilesDir,
+                "Операция выполнена", MessageBoxButtons.OK);
+        }
+
+        private void organizeModsButton_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(OrganizerModsDir))
+            {
+                ShowErrorMessage("Не найден файл конфигурации Mod Organizer или каталог модов не существует.");
+                return;
+            }
+            if (string.IsNullOrEmpty(ModpackDataDir))
+            {
+                ShowErrorMessage("По указанному пути отсутствует папка Data: \n" + ModpackDataDir);
+                return;
+            }
+
+            StartWorker();
+        }
+
+        private void StartWorker()
+        {
             modpackBrowseBox.Enabled = false;
             modpackBrowseButton.Enabled = false;
             skyrimBrowseBox.Enabled = false;
             skyrimBrowseButton.Enabled = false;
-            moBrowseBox.Enabled = false;
-            moBrowseButton.Enabled = false;
+            organizerBrowseBox.Enabled = false;
+            organizerBrowseButton.Enabled = false;
             doAllButton.Visible = false;
             organizeModsButton.Visible = false;
             createProfileButton.Visible = false;
@@ -211,116 +257,26 @@ namespace RfaD_Organizer
             cancelButton.Visible = true;
 
             backgroundWorker1.RunWorkerAsync();
-            AddExecutables();
-            CreateProfile();
-            MessageBox.Show("Добавлены исполняемые файлы для FNISforUsers и Reqtificator.\n\n" +
-                "Создан профиль Requiem for a Dream:\n" + MOProfilesPath + ".\n" +
-                "Ожидайте организации модов.",
-                "Операция выполнена", MessageBoxButtons.OK);
-        }
-
-        private void createProfileButton_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrEmpty(MOPath))
-            {
-                ShowErrorMessage("Путь к папке Mod Organizer 2 обязателен к заполнению.");
-                return;
-            }
-            if (!Directory.Exists(MOPath))
-            {
-                ShowErrorMessage("Указанного пути не существует:\n" + MOPath);
-                return;
-            }
-            if (!Directory.Exists(MOProfilesPath))
-            {
-                ShowErrorMessage("Не найден файл конфигурации Mod Organizer или каталог профилей не существует.");
-                return;
-            }
-
-            CreateProfile();
-            MessageBox.Show("Создан профиль Requiem for a Dream:\n" + MOProfilesPath,
-                "Операция выполнена", MessageBoxButtons.OK);
-        }
-
-        private void organizeModsButton_Click(object sender, EventArgs e)
-        {
-            if (backgroundWorker1.IsBusy != true)
-            {
-                if (!string.IsNullOrEmpty(ModpackPath) && !string.IsNullOrEmpty(MOPath) && !string.IsNullOrEmpty(SkyrimPath))
-                {
-                    if (!Directory.Exists(ModpackPath))
-                    {
-                        ShowErrorMessage("Указанного пути не существует:\n" + ModpackPath);
-                        return;
-                    }
-                    if (!Directory.Exists(MOPath))
-                    {
-                        ShowErrorMessage("Указанного пути не существует:\n" + MOPath);
-                        return;
-                    }
-                    if (!Directory.Exists(SkyrimPath))
-                    {
-                        ShowErrorMessage("Указанного пути не существует:\n" + SkyrimPath);
-                        return;
-                    }
-                    if (!Directory.Exists(MOModsPath))
-                    {
-                        ShowErrorMessage("Не найден файл конфигурации Mod Organizer или каталог модов не существует.");
-                        return;
-                    }
-                    if (!Directory.Exists(ModpackDataPath))
-                    {
-                        ShowErrorMessage("По указанному пути отсутствует папка Data: \n" + ModpackDataPath);
-                        return;
-                    }
-
-                    modpackBrowseBox.Enabled = false;
-                    modpackBrowseButton.Enabled = false;
-                    skyrimBrowseBox.Enabled = false;
-                    skyrimBrowseButton.Enabled = false;
-                    moBrowseBox.Enabled = false;
-                    moBrowseButton.Enabled = false;
-                    doAllButton.Visible = false;
-                    organizeModsButton.Visible = false;
-                    createProfileButton.Visible = false;
-                    addExecutablesButton.Visible = false;
-                    progressBar1.Style = ProgressBarStyle.Continuous;
-                    progressBar1.Value = 0;
-                    progressBar1.Visible = true;
-                    progressBar1.Maximum = 100;
-                    cancelButton.Visible = true;
-
-                    backgroundWorker1.RunWorkerAsync();
-                }
-                else
-                {
-                    ShowErrorMessage("Все поля обязательны к заполнению");
-                }
-            }
-            else
-            {
-                ShowErrorMessage("Операция уже выполняется");
-            }
         }
 
         private void addExecutablesButton_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(MOPath) || string.IsNullOrEmpty(SkyrimPath))
+            if (string.IsNullOrEmpty(OrganizerDir) || string.IsNullOrEmpty(SkyrimDir))
             {
                 ShowErrorMessage("Поля путей Skyrim и Mod Organizer 2 обязательны к заполнению");
                 return;
             }
-            if (!Directory.Exists(MOPath))
+            if (!Directory.Exists(OrganizerDir))
             {
-                ShowErrorMessage("Указанного пути не существует:\n" + MOPath);
+                ShowErrorMessage("Указанного пути не существует:\n" + OrganizerDir);
                 return;
             }
-            if (!Directory.Exists(SkyrimPath))
+            if (!Directory.Exists(SkyrimDir))
             {
-                ShowErrorMessage("Указанного пути не существует:\n" + SkyrimPath);
+                ShowErrorMessage("Указанного пути не существует:\n" + SkyrimDir);
                 return;
             }
-            if (!Directory.Exists(MOModsPath))
+            if (!Directory.Exists(OrganizerModsDir))
             {
                 ShowErrorMessage("Не найден файл конфигурации Mod Organizer или каталог модов не существует.");
                 return;
@@ -338,11 +294,11 @@ namespace RfaD_Organizer
                             MessageBoxIcon.Error);
         }
 
-        private static void ExtractResource(string resPath, string resName, string outDir)
+        private static void ExtractResource(string resDir, string resName, string outDir)
         {
-            resPath += "." + resName;
+            resDir += "." + resName;
             Assembly assembly = Assembly.GetExecutingAssembly();
-            using (Stream s = assembly.GetManifestResourceStream(resPath))
+            using (Stream s = assembly.GetManifestResourceStream(resDir))
             using (BinaryReader r = new BinaryReader(s))
             using (FileStream fs = new FileStream(outDir + "\\" + resName, FileMode.OpenOrCreate))
             using (BinaryWriter w = new BinaryWriter(fs))
@@ -361,13 +317,13 @@ namespace RfaD_Organizer
             return files;
         }
 
-        private IniData ReadINIFile()
+        private IniData ReadINIFile(string iniFileDir)
         {
             IniDataParser _parser = new IniDataParser();
             _parser.Configuration.AssigmentSpacer = "";
             FileIniDataParser parser = new FileIniDataParser(_parser);
             Encoding utf8 = new UTF8Encoding();
-            return parser.ReadFile(MOINIFilePath, utf8);
+            return parser.ReadFile(iniFileDir, utf8);
         }
 
         private void WriteINIFile(IniData iniFile)
@@ -376,7 +332,7 @@ namespace RfaD_Organizer
             _parser.Configuration.AssigmentSpacer = "";
             FileIniDataParser parser = new FileIniDataParser(_parser);
             Encoding utf8 = new UTF8Encoding();
-            parser.WriteFile(MOINIFilePath, iniFile, utf8);
+            parser.WriteFile(OrganizerIniFileDir, iniFile, utf8);
         }
 
         private bool INIHasExecutable(KeyDataCollection section, string title)
@@ -390,7 +346,7 @@ namespace RfaD_Organizer
         private void AddCustomExecutable(string title, string binary, string arguments = "",
             string workingDirectory = "", string toolbar = "false", string ownicon = "false")
         {
-            IniData iniFile = ReadINIFile();
+            IniData iniFile = organizerIniData;
             KeyDataCollection customExecutables = iniFile["customExecutables"];
             if (INIHasExecutable(customExecutables, title))
                 return;
@@ -411,75 +367,54 @@ namespace RfaD_Organizer
 
         private void CreateProfile()
         {
-            string profilePath = MOProfilesPath + "\\Requiem for a Dream";
-            Directory.CreateDirectory(profilePath);
+            string profileDir = OrganizerProfilesDir + "\\Requiem for a Dream";
+            Directory.CreateDirectory(profileDir);
             List<string> profileRes = new List<string>() { "loadorder.txt", "modlist.txt", "plugins.txt", "settings.ini" };
             foreach (string res in profileRes)
-                ExtractResource("RfaD_Organizer.Resources.Profile", res, profilePath);
-        }
-
-        private string GetSkyrimDirectory()
-        {
-            IniData iniFile = ReadINIFile();
-            KeyDataCollection customExecutables = iniFile["customExecutables"];
-            string skyrimNum = null;
-            foreach (KeyData key in customExecutables)
-                if (key.Value == "Skyrim")
-                {
-                    skyrimNum = key.KeyName.Substring(0, 1);
-                    break;
-                }
-            if (!string.IsNullOrEmpty(skyrimNum))
-            {
-                string skyrimDir = customExecutables[skyrimNum + "\\workingDirectory"];
-                if (!string.IsNullOrEmpty(skyrimDir))
-                    return skyrimDir.Replace("/", "\\"); ;
-            }
-            return null;
+                ExtractResource("RfaD_Organizer.Resources.Profile", res, profileDir);
         }
 
         private string GetINIValue(string section, string value)
         {
-            IniData iniFile = ReadINIFile();
             if (section == "Settings")
             {
-                string baseDir = iniFile[section]["base_directory"];
+                string baseDir = organizerIniData[section]["base_directory"];
 
                 if (!string.IsNullOrEmpty(baseDir))
                     baseDir = baseDir.Replace("/", "\\");
                 else
-                    baseDir = MOAppDataPath;
+                    baseDir = OrganizerAppDataDir;
 
                 if (value == "base_directory")
                     return baseDir;
 
-                string customPath = iniFile[section][value];
-                if (customPath != null)
-                    customPath = customPath.Replace("%BASE_DIR%", baseDir).Replace("/", "\\");
-                return customPath;
+                string customDir = organizerIniData[section][value];
+                if (customDir != null)
+                    customDir = customDir.Replace("%BASE_DIR%", baseDir).Replace("/", "\\");
+                return customDir;
             }
-            return iniFile[section][value];
+            return organizerIniData[section][value];
         }
 
         private void AddExecutables()
         {
-            string fnisGeneratePath = "\\tools\\generatefnis_for_users";
-            string fnisPath = MOModsPath + "\\[RfaD] FNIS Behavior" + fnisGeneratePath;
+            string fnisGenerateDir = "\\tools\\generatefnis_for_users";
+            string fnisDir = OrganizerModsDir + "\\[RfaD] FNIS Behavior" + fnisGenerateDir;
             AddCustomExecutable(title: "[Rfad] GenerateFNISforUsers",
-                binary: fnisPath + "\\GenerateFNISforUsers.exe",
-                workingDirectory: fnisPath,
+                binary: fnisDir + "\\GenerateFNISforUsers.exe",
+                workingDirectory: fnisDir,
                 toolbar: "true");
-            string fnisMyPatchesPath = MOModsPath + "\\[RfaD] FNISforUsers" + fnisGeneratePath;
-            Directory.CreateDirectory(fnisMyPatchesPath);
-            ExtractResource("RfaD_Organizer.Resources.Fnis", "MyPatches.txt", fnisMyPatchesPath);
-            string reqtificatorSavefilePath = MOModsPath + "\\[RfaD] Reqtificator\\skyproc patchers\\requiem\\Files";
+            string fnisMyPatchesDir = OrganizerModsDir + "\\[RfaD] FNISforUsers" + fnisGenerateDir;
+            Directory.CreateDirectory(fnisMyPatchesDir);
+            ExtractResource("RfaD_Organizer.Resources.Fnis", "MyPatches.txt", fnisMyPatchesDir);
+            string reqtificatorSavefileDir = OrganizerModsDir + "\\[RfaD] Reqtificator\\skyproc patchers\\requiem\\Files";
             AddCustomExecutable(title: "[Rfad] Reqtificator",
                 binary: Environment.SystemDirectory + "\\cmd.exe",
                 arguments: "/K Reqtificator.bat",
-                workingDirectory: SkyrimPath + "\\Data",
+                workingDirectory: SkyrimDir + "\\Data",
                 toolbar: "true");
-            Directory.CreateDirectory(reqtificatorSavefilePath);
-            ExtractResource("RfaD_Organizer.Resources.Reqtificator", "Savefile", reqtificatorSavefilePath);
+            Directory.CreateDirectory(reqtificatorSavefileDir);
+            ExtractResource("RfaD_Organizer.Resources.Reqtificator", "Savefile", reqtificatorSavefileDir);
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
@@ -492,7 +427,7 @@ namespace RfaD_Organizer
             using (StreamReader r = new StreamReader(stream))
             {
                 Dictionary<string, string> skyrimFiles = JsonConvert.DeserializeObject<Dictionary<string, string>>(r.ReadToEnd());
-                List<string> dataFiles = DirSearch(ModpackDataPath);
+                List<string> dataFiles = DirSearch(ModpackDataDir);
                 int progress_max = dataFiles.Count;
                 int progress = 0;
                 List<string> installedMods = new List<string>();
@@ -502,13 +437,13 @@ namespace RfaD_Organizer
                 {
                     string src = dataFile;
                     string fileName = Path.GetFileName(dataFile);
-                    string subFilePath = Path.GetDirectoryName(dataFile).Substring(ModpackDataPath.Length).TrimStart(Path.DirectorySeparatorChar).ToLower();
+                    string subFilePath = Path.GetDirectoryName(dataFile).Substring(ModpackDataDir.Length).TrimStart(Path.DirectorySeparatorChar).ToLower();
                     if (string.IsNullOrEmpty(subFilePath))
                         subFilePath += fileName;
                     else
                         subFilePath += "\\" + fileName;
                     string modName = skyrimFiles[subFilePath];
-                    string dstPath = MOModsPath + "\\" + modName + "\\" + Path.GetDirectoryName(subFilePath);
+                    string dstPath = OrganizerModsDir + "\\" + modName + "\\" + Path.GetDirectoryName(subFilePath);
                     string dst = dstPath + "\\" + fileName;
                     Directory.CreateDirectory(dstPath);
                     File.Copy(src, dst, true);
@@ -522,7 +457,7 @@ namespace RfaD_Organizer
                         worker.ReportProgress(-1);
                         foreach (string mod in installedMods)
                         {
-                            string modDir = MOModsPath + "\\" + mod;
+                            string modDir = OrganizerModsDir + "\\" + mod;
                             DirectoryInfo modDirInfo = new DirectoryInfo(modDir);
                             foreach (FileInfo file in modDirInfo.EnumerateFiles())
                             {
@@ -552,17 +487,17 @@ namespace RfaD_Organizer
                 "MODS_separator"
             };
             foreach (string dir in modsDirsToCreate)
-                Directory.CreateDirectory(MOModsPath + "\\" + dir);
+                Directory.CreateDirectory(OrganizerModsDir + "\\" + dir);
 
             //Copy SKSE files to Skyrim root directory
-            string[] dllFiles = Directory.GetFiles(MOModsPath, "*.dll");
-            string[] exeFiles = Directory.GetFiles(MOModsPath, "*.exe");
+            string[] dllFiles = Directory.GetFiles(OrganizerModsDir, "*.dll");
+            string[] exeFiles = Directory.GetFiles(OrganizerModsDir, "*.exe");
             string[] rootFiles = new string[dllFiles.Length + exeFiles.Length];
             dllFiles.CopyTo(rootFiles, 0);
             exeFiles.CopyTo(rootFiles, dllFiles.Length);
             foreach (string file in rootFiles)
             {
-                string dstFile = SkyrimPath + "\\" + Path.GetFileName(file);
+                string dstFile = SkyrimDir + "\\" + Path.GetFileName(file);
                 File.Copy(file, dstFile, true);
             }
         }
@@ -573,8 +508,8 @@ namespace RfaD_Organizer
             modpackBrowseButton.Enabled = true;
             skyrimBrowseBox.Enabled = true;
             skyrimBrowseButton.Enabled = true;
-            moBrowseBox.Enabled = true;
-            moBrowseButton.Enabled = true;
+            organizerBrowseBox.Enabled = true;
+            organizerBrowseButton.Enabled = true;
             progressBar1.Visible = false;
             cancelButton.Visible = false;
             doAllButton.Visible = true;
@@ -594,7 +529,7 @@ namespace RfaD_Organizer
                 return;
             }
             MessageBox.Show("Моды с префиксом [RfaD] организованы в папке:\n"
-                + MOModsPath, "Операция выполнена", MessageBoxButtons.OK);
+                + OrganizerModsDir, "Операция выполнена", MessageBoxButtons.OK);
         }
 
         private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -614,9 +549,21 @@ namespace RfaD_Organizer
             }
         }
 
-        private void moBrowseBox_TextChanged(object sender, EventArgs e)
+        private void organizerBrowseBox_TextChanged(object sender, EventArgs e)
         {
+            organizerIniData = ReadINIFile(OrganizerIniFileDir);
             skyrimBrowseBox.Text = GetSkyrimDirectory();
+            ToggleButtonsIfDirsExists();
+        }
+
+        private void modpackBrowseBox_TextChanged(object sender, EventArgs e)
+        {
+            ToggleButtonsIfDirsExists();
+        }
+
+        private void skyrimBrowseBox_TextChanged(object sender, EventArgs e)
+        {
+            ToggleButtonsIfDirsExists();
         }
     }
 }
